@@ -1,11 +1,18 @@
-if (!gradle.startParameter.taskNames.contains('release')) {
-    println "Not a release build, setting version to ${project.version}-SNAPSHOT"
+
+if (gradle.startParameter.taskNames.contains('release')) {
+    logger.lifecycle 'Starting release build {}', version
+    check.dependsOn integrationTest
+
+} else {
+    logger.lifecycle 'Not a release build, setting version to {}', "${project.version}-SNAPSHOT"
     project.version += '-SNAPSHOT'
 }
 
 
-tasks.create('release') << {
-    println "Releasing $version"
+task release {
+    doLast {
+        logger.lifecycle 'Release {} successful', version
+    }
 }
 
 

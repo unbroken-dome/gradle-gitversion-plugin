@@ -1,171 +1,123 @@
 package org.unbrokendome.gradle.plugins.gitversion
 
-import groovy.util.logging.Log4j2
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.ObjectId
-import org.eclipse.jgit.transport.RefSpec
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.Before
 import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
-@Log4j2
+
+/**
+ * Integration test with a "real" Git repository. Creates a bare git repo and makes some commits to it, the first
+ * commit being the build.gradle file that's using the plugin.
+ *
+ * <p>These tests use the Gradle TestKit. If you run the tests from the IDE, make sure to execute the task
+ * "pluginUnderTestMetadata" before.
+ */
 class GitVersionPluginIntegrationTest extends Specification {
 
-    @Rule TemporaryFolder testRepositoryDir
-    @Rule TemporaryFolder setupWorkingDir
-
-    @Rule TemporaryFolder testWorkingDir
+    @Rule TestRepository testRepository
 
     static final String buildFileContents = '''
         plugins {
             id 'org.unbroken-dome.gitversion'
         }
-        gitVersion {
+        
+        gitVersion.rules {
             onBranch('master') {
-                def branchPoint = firstBranchPoint ~/.*\\/origin\\/release\\/(\\d+)\\.(\\d+)/
-                def major = branchPoint ? branchPoint.matches[1].toInteger() : 0
-                def minor = branchPoint ? branchPoint.matches[2].toInteger() : 0
-                project.version = semver(major, minor, 0)
-                        .incrementMinorVersion()
-                        .setPreReleaseVersion('master')
-                        .setBuildMetadata(head.id(7))
-                        .toString()
+                def branchPoint = branchPoint ~/.*\\/origin\\/release\\/(\\d+)\\.(\\d+)/
+                version.major = branchPoint ? branchPoint.matches[1].toInteger() : 0
+                version.minor = branchPoint ? branchPoint.matches[2].toInteger() : 0
+                version.incrementMinor()
+                version.patch = 0
+                version.prereleaseTag = 'master'
             }
-            onBranch(/release\\/(\\d+)\\.(\\d+)/) {
-                def major = matches[1].toInteger()
-                def minor = matches[2].toInteger()
-                def patch = countCommitsSince branchPoint()
-                project.version = semver(major, minor, patch)
-                        .setBuildMetadata(head.id(7))
+            
+            onBranch(~/release\\/(\\d+)\\.(\\d+)/) {
+                version.set(
+                    matches[1].toInteger(),
+                    matches[2].toInteger(),
+                    countCommitsSince(branchPoint()))
             }
-        }.doLast { println project.version }
-'''
-
-    private Map<String, ObjectId> commits = [:]
-
-    @Before
-    void setupRepository() {
-        Git.init()
-                .setDirectory(testRepositoryDir.root)
-                .setBare(true)
-                .call()
-
-        def git = Git.cloneRepository()
-                .setDirectory(setupWorkingDir.root)
-                .setURI(testRepositoryDir.root.toURI().toString())
-                .call()
-
-        // commit A: create a 'build.gradle' file as the initial commit on master
-        setupWorkingDir.newFile('build.gradle').withWriter { w ->
-            w.write(buildFileContents)
         }
-        git.add()
-                .addFilepattern('build.gradle')
-                .call()
-        def commit = git.commit()
-                .setMessage('initial commit on master')
-                .call()
-        log.info('Committed: {} {}', commit.abbreviate(7).name(), commit.shortMessage)
-        commits.A = commit
+        
+        version = gitVersion.determineVersion()
+        
+        task printVersion {
+            doLast { println project.version }
+        }
+    '''
 
-        // commit B: change on master (this will be the "branch point")
-        commits.B = commitFile(git, '2', 'second commit on master before branching')
 
-        // create a release branch
-        git.checkout().setName('release/1.0').setCreateBranch(true).call()
-
-        // commit C: change on release branch
-        commits.C = commitFile(git, '3', 'first commit on release branch')
-
-        // commit D: change on master branch
-        git.checkout().setName('master').call()
-        commits.D = commitFile(git, '4', 'post-branch commit on master')
-
-        // commit E: merge master into release branch
-        git.checkout().setName('release/1.0').call()
-        commits.E = merge(git, 'master', 'merge master into release branch')
-
-        // commit F: change on master
-        git.checkout().setName('master').call()
-        commits.F = commitFile(git, '5', 'commit on master after master was merged to release')
-
-        // commit G: merge release branch into master
-        commits.G = merge(git, 'release/1.0', 'merge release branch into master')
-        git.push()
-                .setRemote('origin')
-                .setRefSpecs(
-                        new RefSpec('master:master'),
-                        new RefSpec('release/1.0:release/1.0'))
-                .call()
-    }
-
-    private ObjectId commitFile(Git git, String fileName, String message) {
-        setupWorkingDir.newFile(fileName)
-        git.add()
-                .addFilepattern(fileName)
-                .call()
-        def commit = git.commit()
-                .setMessage(message)
-                .call()
-        log.info('Committed: {} {}', commit.abbreviate(7).name(), commit.shortMessage)
-        return commit
-    }
-
-    private ObjectId merge(Git git, String from, String message) {
-        def mergeResult = git.merge()
-                .include(git.repository.findRef(from))
-                .setCommit(true)
-                .setMessage(message)
-                .call()
-        log.info("Merge commit: {} ({} -> {}) {}",
-                mergeResult.newHead.abbreviate(7).name(), from, git.repository.branch, message)
-        return mergeResult.newHead
+    private void setupRepository() {
+        /*
+         * Commit graph:
+         *
+         *   A ----> B ----> D ----> F ----> G
+         *            \       \             /
+         *             \       \           /
+         *              \       \         /
+         *               C ----> E ------/
+         */
+        testRepository.setup { git ->
+            git
+            // commit A
+                    .commitFile('build.gradle', 'initial commit on master', buildFileContents)
+            // commit B
+                    .commitFile('1', 'second commit on master before branching')
+            // commit C
+                    .checkoutNew('release/1.0')
+                    .commitFile('2', 'first commit on release branch')
+            // commit D
+                    .checkout('master')
+                    .commitFile('3', 'post-branch commit on master')
+            // commit E (merge)
+                    .checkout('release/1.0')
+                    .merge('master', 'merge master into release branch')
+            // commit F
+                    .checkout('master')
+                    .commitFile('4', 'commit on master after master was merged to release')
+            // commit G (merge)
+                    .merge('release/1.0', 'merge release branch into master')
+        }
     }
 
 
     def "master branch"() {
         given:
-            Git.cloneRepository()
-                .setDirectory(testWorkingDir.root)
-                .setURI(testRepositoryDir.root.toURI().toString())
-                .setBranch('master')
-                .call()
+            setupRepository()
+            def workingDir = testRepository.cloneAndCheckout('master')
 
         when:
             def buildResult = GradleRunner.create()
-                    .withProjectDir(testWorkingDir.root)
-                    .withArguments('gitVersion', '--stacktrace', '-q')
+                    .withProjectDir(workingDir)
+                    .withArguments('printVersion', '--stacktrace', '-q')
                     .withPluginClasspath()
                     .withDebug(true)
                     .build()
 
         then:
-            buildResult.task(':gitVersion').outcome == TaskOutcome.SUCCESS
-            buildResult.output.trim() == '1.1.0-master+' + commits.G.abbreviate(7).name()
+            buildResult.task(':printVersion').outcome == TaskOutcome.SUCCESS
+        and:
+            buildResult.output.trim() == '1.1.0-master'
     }
 
 
     def "release branch"() {
         given:
-            Git.cloneRepository()
-                .setDirectory(testWorkingDir.root)
-                .setURI(testRepositoryDir.root.toURI().toString())
-                .setBranch('release/1.0')
-                .call()
+            setupRepository()
+            def workingDir = testRepository.cloneAndCheckout('release/1.0')
 
         when:
             def buildResult = GradleRunner.create()
-                    .withProjectDir(testWorkingDir.root)
-                    .withArguments('gitVersion', '--stacktrace', '-q')
+                    .withProjectDir(workingDir)
+                    .withArguments('printVersion', '--stacktrace', '-q')
                     .withPluginClasspath()
                     .withDebug(true)
                     .build()
 
         then:
-            buildResult.task(':gitVersion').outcome == TaskOutcome.SUCCESS
-            buildResult.output.trim() == '1.0.2+' + commits.E.abbreviate(7).name()
+            buildResult.task(':printVersion').outcome == TaskOutcome.SUCCESS
+        and:
+            buildResult.output.trim() == '1.0.2'
     }
 }
