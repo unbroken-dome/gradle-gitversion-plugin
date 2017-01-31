@@ -3,6 +3,9 @@ package org.unbrokendome.gradle.plugins.gitversion.version;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 
 public final class SemVersionParser {
 
@@ -14,7 +17,8 @@ public final class SemVersionParser {
                     + "(\\+(?<buildmeta>[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?");
 
 
-    public static SemVersion parse(String input) {
+    @Nonnull
+    public static SemVersion parse(@Nullable String input) {
         if (input == null) {
             throw new IllegalArgumentException("input is null");
         }
@@ -33,7 +37,7 @@ public final class SemVersionParser {
     }
 
 
-    private static int parseIntOrZero(String input) {
+    private static int parseIntOrZero(@Nullable String input) {
         return input != null ? Integer.parseInt(input) : 0;
     }
 }

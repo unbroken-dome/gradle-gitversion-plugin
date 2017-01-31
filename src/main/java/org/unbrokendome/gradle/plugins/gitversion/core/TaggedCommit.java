@@ -9,12 +9,15 @@ import javax.annotation.Nonnull;
 
 public interface TaggedCommit extends HasObjectId {
 
+    @Nonnull
     GitTag getTag();
 
+    @Nonnull
     default String getTagName() {
         return getTag().getName();
     }
 
+    @Nonnull
     default GitCommit getCommit() {
         return getTag().getTarget();
     }
@@ -25,5 +28,6 @@ public interface TaggedCommit extends HasObjectId {
         return getCommit().getId();
     }
 
+    @Nonnull
     MatcherFacade getMatches();
 }

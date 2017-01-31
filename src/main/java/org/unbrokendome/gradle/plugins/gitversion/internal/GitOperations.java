@@ -1,27 +1,33 @@
 package org.unbrokendome.gradle.plugins.gitversion.internal;
 
-import groovy.lang.Tuple2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.unbrokendome.gradle.plugins.gitversion.core.BranchPoint;
-import org.unbrokendome.gradle.plugins.gitversion.core.MatcherFacade;
-import org.unbrokendome.gradle.plugins.gitversion.core.TaggedCommit;
-import org.unbrokendome.gradle.plugins.gitversion.model.*;
-import org.unbrokendome.gradle.plugins.gitversion.util.collections.CollectionUtils;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import org.unbrokendome.gradle.plugins.gitversion.core.BranchPoint;
+import org.unbrokendome.gradle.plugins.gitversion.core.MatcherFacade;
+import org.unbrokendome.gradle.plugins.gitversion.core.TaggedCommit;
+import org.unbrokendome.gradle.plugins.gitversion.model.CloseableIterator;
+import org.unbrokendome.gradle.plugins.gitversion.model.GitBranch;
+import org.unbrokendome.gradle.plugins.gitversion.model.GitCommit;
+import org.unbrokendome.gradle.plugins.gitversion.model.GitRepository;
+import org.unbrokendome.gradle.plugins.gitversion.model.GitTag;
+import org.unbrokendome.gradle.plugins.gitversion.model.HasObjectId;
+import org.unbrokendome.gradle.plugins.gitversion.util.collections.CollectionUtils;
+
+import groovy.lang.Tuple2;
+
 
 public class GitOperations {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GitRepository repository;
 
 
@@ -85,6 +91,7 @@ public class GitOperations {
     }
 
 
+    @Nonnull
     private Stream<GitBranchWithMatcher> findMatchingBranchNames(Pattern branchNamePattern) {
         return repository.getBranches().stream()
                 .map(branch -> {
@@ -118,6 +125,7 @@ public class GitOperations {
     }
 
 
+    @Nullable
     public TaggedCommit findLatestTag(Pattern tagNamePattern, boolean includeMerges) {
         GitRepository.WalkMode walkMode = includeMerges ?
                 GitRepository.WalkMode.ALL : GitRepository.WalkMode.FIRST_PARENT_ONLY;

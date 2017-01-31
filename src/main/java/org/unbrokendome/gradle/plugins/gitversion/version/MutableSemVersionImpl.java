@@ -1,12 +1,15 @@
 package org.unbrokendome.gradle.plugins.gitversion.version;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 public class MutableSemVersionImpl implements MutableSemVersion {
 
     private int major = 0;
     private int minor = 1;
     private int patch = 0;
-    private String prereleaseTag = null;
-    private String buildMetadata = null;
+    @Nullable private String prereleaseTag = null;
+    @Nullable private String buildMetadata = null;
 
 
     @Override
@@ -15,6 +18,7 @@ public class MutableSemVersionImpl implements MutableSemVersion {
     }
 
 
+    @Nonnull
     @Override
     public MutableSemVersion setMajor(int major) {
         this.major = major;
@@ -22,6 +26,7 @@ public class MutableSemVersionImpl implements MutableSemVersion {
     }
 
 
+    @Nonnull
     @Override
     public MutableSemVersion addMajor(int delta) {
         return setMajor(major + delta);
@@ -34,6 +39,7 @@ public class MutableSemVersionImpl implements MutableSemVersion {
     }
 
 
+    @Nonnull
     @Override
     public MutableSemVersion setMinor(int minor) {
         this.minor = minor;
@@ -41,6 +47,7 @@ public class MutableSemVersionImpl implements MutableSemVersion {
     }
 
 
+    @Nonnull
     @Override
     public MutableSemVersion addMinor(int delta) {
         return setMinor(minor + delta);
@@ -53,6 +60,7 @@ public class MutableSemVersionImpl implements MutableSemVersion {
     }
 
 
+    @Nonnull
     @Override
     public MutableSemVersion setPatch(int patch) {
         this.patch = patch;
@@ -60,6 +68,7 @@ public class MutableSemVersionImpl implements MutableSemVersion {
     }
 
 
+    @Nonnull
     @Override
     public MutableSemVersion addPatch(int delta) {
         return setPatch(patch + delta);
@@ -67,11 +76,13 @@ public class MutableSemVersionImpl implements MutableSemVersion {
 
 
     @Override
+    @Nullable
     public String getPrereleaseTag() {
         return prereleaseTag;
     }
 
 
+    @Nonnull
     @Override
     public MutableSemVersion setPrereleaseTag(String prereleaseTag) {
         this.prereleaseTag = prereleaseTag;
@@ -79,12 +90,14 @@ public class MutableSemVersionImpl implements MutableSemVersion {
     }
 
 
+    @Nullable
     @Override
     public String getBuildMetadata() {
         return buildMetadata;
     }
 
 
+    @Nonnull
     @Override
     public MutableSemVersion setBuildMetadata(String buildMetadata) {
         this.buildMetadata = buildMetadata;
@@ -92,8 +105,11 @@ public class MutableSemVersionImpl implements MutableSemVersion {
     }
 
 
+    @Nonnull
     @Override
-    public MutableSemVersion set(int major, int minor, int patch, String prereleaseTag, String buildMetadata) {
+    public MutableSemVersion set(int major, int minor, int patch,
+                                 @Nullable String prereleaseTag,
+                                 @Nullable String buildMetadata) {
         this.major = major;
         this.minor = minor;
         this.patch = patch;

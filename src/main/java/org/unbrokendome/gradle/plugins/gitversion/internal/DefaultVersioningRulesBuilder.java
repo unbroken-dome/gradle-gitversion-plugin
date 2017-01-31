@@ -10,6 +10,8 @@ import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+
 
 public class DefaultVersioningRulesBuilder implements VersioningRulesBuilder {
 
@@ -21,6 +23,7 @@ public class DefaultVersioningRulesBuilder implements VersioningRulesBuilder {
     private List<Rule> afterRules = new ArrayList<>(1);
 
 
+    @Nonnull
     @Override
     public VersioningRulesBuilder setBaseVersion(SemVersion baseVersion) {
         this.baseVersion = SemVersion.immutableCopyOf(baseVersion);
@@ -28,6 +31,7 @@ public class DefaultVersioningRulesBuilder implements VersioningRulesBuilder {
     }
 
 
+    @Nonnull
     @Override
     public VersioningRulesBuilder addBeforeRule(Rule rule) {
         beforeRules.add(rule);
@@ -35,6 +39,7 @@ public class DefaultVersioningRulesBuilder implements VersioningRulesBuilder {
     }
 
 
+    @Nonnull
     @Override
     public VersioningRulesBuilder addRule(Rule rule) {
         rules.add(rule);
@@ -42,6 +47,7 @@ public class DefaultVersioningRulesBuilder implements VersioningRulesBuilder {
     }
 
 
+    @Nonnull
     @Override
     public VersioningRulesBuilder addAfterRule(Rule rule) {
         afterRules.add(rule);
@@ -49,6 +55,7 @@ public class DefaultVersioningRulesBuilder implements VersioningRulesBuilder {
     }
 
 
+    @Nonnull
     @Override
     public VersioningRules build() {
         Iterable<Rule> allRules = Iterables.concat(beforeRules, rules, afterRules);

@@ -2,6 +2,8 @@ package org.unbrokendome.gradle.plugins.gitversion.util;
 
 import java.util.function.Supplier;
 
+import javax.annotation.Nonnull;
+
 
 public class Lazy<T> implements Supplier<T> {
 
@@ -10,11 +12,12 @@ public class Lazy<T> implements Supplier<T> {
     private transient T value;
 
 
-    public Lazy(Supplier<T> supplier) {
+    private Lazy(Supplier<T> supplier) {
         this.supplier = supplier;
     }
 
 
+    @Nonnull
     public static <T> Lazy<T> of(Supplier<T> supplier) {
         return new Lazy<>(supplier);
     }

@@ -9,10 +9,12 @@ import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion;
 
 import java.util.regex.Pattern;
 
+import javax.annotation.Nonnull;
+
 
 public interface RulesContainer {
 
-
+    @Nonnull
     MutableSemVersion getBaseVersion();
 
 

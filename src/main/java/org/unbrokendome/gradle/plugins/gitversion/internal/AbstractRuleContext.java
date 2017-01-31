@@ -21,6 +21,7 @@ public abstract class AbstractRuleContext implements RuleContext {
 
 
     @Override
+    @Nonnull
     public MutableSemVersion getVersion() {
         return evaluationContext.getVersion();
     }

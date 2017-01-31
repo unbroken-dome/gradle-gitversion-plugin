@@ -9,17 +9,20 @@ import javax.annotation.Nonnull;
 
 public interface BranchPoint extends HasObjectId {
 
+    @Nonnull
     GitCommit getCommit();
 
-
+    @Nonnull
     GitBranch getOtherBranch();
 
 
+    @Nonnull
     default String getOtherBranchName() {
         return getOtherBranch().getShortName();
     }
 
 
+    @Nonnull
     MatcherFacade getMatches();
 
 

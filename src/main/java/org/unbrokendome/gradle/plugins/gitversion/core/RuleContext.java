@@ -8,6 +8,7 @@ import org.unbrokendome.gradle.plugins.gitversion.model.GitCommit;
 import org.unbrokendome.gradle.plugins.gitversion.model.GitRepository;
 import org.unbrokendome.gradle.plugins.gitversion.model.HasObjectId;
 import org.unbrokendome.gradle.plugins.gitversion.version.MutableSemVersion;
+import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -16,7 +17,18 @@ import java.util.regex.Pattern;
 
 public interface RuleContext {
 
+    @Nonnull
     MutableSemVersion getVersion();
+
+
+    default void setVersion(SemVersion version) {
+        getVersion().setFrom(version);
+    }
+
+
+    default void setVersion(String versionString) {
+        getVersion().setFrom(versionString);
+    }
 
     /**
      * Gets the Gradle project.

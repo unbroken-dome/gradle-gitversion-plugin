@@ -1,5 +1,7 @@
 package org.unbrokendome.gradle.plugins.gitversion.internal;
 
+import javax.annotation.Nonnull;
+
 import org.unbrokendome.gradle.plugins.gitversion.core.BranchPoint;
 import org.unbrokendome.gradle.plugins.gitversion.core.MatcherFacade;
 import org.unbrokendome.gradle.plugins.gitversion.model.GitBranch;
@@ -25,18 +27,21 @@ public class BranchPointImpl implements BranchPoint {
     }
 
 
+    @Nonnull
     @Override
     public GitCommit getCommit() {
         return commit;
     }
 
 
+    @Nonnull
     @Override
     public GitBranch getOtherBranch() {
         return otherBranch;
     }
 
 
+    @Nonnull
     @Override
     public MatcherFacade getMatches() {
         return matches;

@@ -32,5 +32,6 @@ public abstract class AbstractPredicateMatchingRule<TContext extends RuleContext
     }
 
 
+    @Nonnull
     protected abstract TContext createContext(RuleEvaluationContext evaluationContext);
 }

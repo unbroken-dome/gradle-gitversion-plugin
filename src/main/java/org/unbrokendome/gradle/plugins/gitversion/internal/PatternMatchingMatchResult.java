@@ -2,6 +2,8 @@ package org.unbrokendome.gradle.plugins.gitversion.internal;
 
 import java.util.regex.Matcher;
 
+import javax.annotation.Nonnull;
+
 
 public final class PatternMatchingMatchResult implements MatchResult {
 
@@ -19,6 +21,7 @@ public final class PatternMatchingMatchResult implements MatchResult {
     }
 
 
+    @Nonnull
     Matcher getMatcher() {
         return matcher;
     }

@@ -2,17 +2,21 @@ package org.unbrokendome.gradle.plugins.gitversion.version;
 
 import java.util.Objects;
 
+import javax.annotation.Nullable;
+
 
 public final class ImmutableSemVersionImpl implements SemVersion {
 
     private final int major;
     private final int minor;
     private final int patch;
-    private final String prereleaseTag;
-    private final String buildMetadata;
+    @Nullable private final String prereleaseTag;
+    @Nullable private final String buildMetadata;
 
 
-    public ImmutableSemVersionImpl(int major, int minor, int patch, String prereleaseTag, String buildMetadata) {
+    ImmutableSemVersionImpl(int major, int minor, int patch,
+                                   @Nullable String prereleaseTag,
+                                   @Nullable String buildMetadata) {
         this.major = major;
         this.minor = minor;
         this.patch = patch;
@@ -40,12 +44,14 @@ public final class ImmutableSemVersionImpl implements SemVersion {
 
 
     @Override
+    @Nullable
     public String getPrereleaseTag() {
         return prereleaseTag;
     }
 
 
     @Override
+    @Nullable
     public String getBuildMetadata() {
         return buildMetadata;
     }

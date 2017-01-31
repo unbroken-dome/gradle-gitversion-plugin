@@ -4,6 +4,8 @@ import org.unbrokendome.gradle.plugins.gitversion.core.MatcherFacade;
 
 import java.util.regex.Matcher;
 
+import javax.annotation.Nonnull;
+
 
 public final class DefaultMatcherFacade implements MatcherFacade {
 
@@ -21,12 +23,14 @@ public final class DefaultMatcherFacade implements MatcherFacade {
     }
 
 
+    @Nonnull
     @Override
     public String getAt(int groupIndex) {
         return matcher.group(groupIndex);
     }
 
 
+    @Nonnull
     @Override
     public String getAt(String groupName) {
         return matcher.group(groupName);

@@ -8,6 +8,8 @@ import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion;
 
 import java.util.regex.Pattern;
 
+import javax.annotation.Nonnull;
+
 
 public class DefaultRulesContainer implements RulesContainer, RulesContainerInternal {
 
@@ -17,6 +19,7 @@ public class DefaultRulesContainer implements RulesContainer, RulesContainerInte
     private final MutableSemVersion baseVersion = DEFAULT_VERSION.cloneAsMutable();
 
 
+    @Nonnull
     @Override
     public MutableSemVersion getBaseVersion() {
         return baseVersion;
@@ -69,6 +72,7 @@ public class DefaultRulesContainer implements RulesContainer, RulesContainerInte
     }
 
 
+    @Nonnull
     @Override
     public VersioningRules getVersioningRules() {
         versioningRules.setBaseVersion(baseVersion);
