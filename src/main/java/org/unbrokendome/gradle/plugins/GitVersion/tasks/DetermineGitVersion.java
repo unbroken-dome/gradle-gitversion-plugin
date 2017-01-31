@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
@@ -24,6 +25,7 @@ import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion;
 /**
  * A task that determines the version from a Git repository and stores it in a file.
  */
+@SuppressWarnings("WeakerAccess")
 public class DetermineGitVersion extends ConventionTask {
 
     private File repositoryLocation;
@@ -37,6 +39,7 @@ public class DetermineGitVersion extends ConventionTask {
      *
      * @return the full path to the repository
      */
+    @Internal
     public File getRepositoryLocation() {
         return repositoryLocation;
     }
@@ -108,6 +111,7 @@ public class DetermineGitVersion extends ConventionTask {
      * @throws IOException for I/O errors
      */
     @Nullable
+    @Internal
     public SemVersion getCachedVersion() throws IOException {
         if (targetFile != null && targetFile.exists()) {
             List<String> lines = Files.readAllLines(targetFile.toPath());

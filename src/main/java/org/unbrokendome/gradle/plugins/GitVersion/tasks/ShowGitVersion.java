@@ -1,6 +1,7 @@
 package org.unbrokendome.gradle.plugins.gitversion.tasks;
 
 import org.gradle.api.internal.ConventionTask;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion;
 
@@ -14,11 +15,13 @@ import java.util.Collections;
  * <p>This task reads the version from the file that was
  * written earlier by a {@link DetermineGitVersion} task.</p>
  */
+@SuppressWarnings("WeakerAccess")
 public class ShowGitVersion extends ConventionTask {
 
     private DetermineGitVersion fromTask;
 
 
+    @Internal
     public DetermineGitVersion getFromTask() {
         return fromTask;
     }
