@@ -10,9 +10,9 @@ import javax.annotation.Nullable;
 public final class SemVersionParser {
 
     private static final Pattern PATTERN = Pattern.compile(
-            "(?<major>[1-9][0-9]*)"
-                    + "(\\.(?<minor>[1-9][0-9]*)"
-                    + "(\\.(?<patch>[1-9][0-9]*))?)?"
+            "(?<major>[0-9]*)"
+                    + "(\\.(?<minor>[0-9]*)"
+                    + "(\\.(?<patch>[0-9]*))?)?"
                     + "(-(?<prerelease>[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?"
                     + "(\\+(?<buildmeta>[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?");
 
