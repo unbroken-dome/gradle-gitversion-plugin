@@ -7,17 +7,22 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.util.List;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.gradle.api.internal.ConventionTask;
-import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.unbrokendome.gradle.plugins.gitversion.GitVersionExtension;
+import org.unbrokendome.gradle.plugins.gitversion.GitVersionPlugin;
 import org.unbrokendome.gradle.plugins.gitversion.core.RulesContainer;
+import org.unbrokendome.gradle.plugins.gitversion.core.VersioningRules;
+import org.unbrokendome.gradle.plugins.gitversion.internal.RulesContainerInternal;
+import org.unbrokendome.gradle.plugins.gitversion.model.CloseableGitRepository;
+import org.unbrokendome.gradle.plugins.gitversion.model.GitRepositoryFactory;
 import org.unbrokendome.gradle.plugins.gitversion.util.RepositoryUtils;
 import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion;
 
@@ -25,14 +30,13 @@ import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion;
 /**
  * A task that determines the version from a Git repository and stores it in a file.
  */
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class DetermineGitVersion extends ConventionTask {
 
     private File repositoryLocation;
     private File gitDirectory;
     private RulesContainer rules;
     private File targetFile;
-
 
     /**
      * Gets the location of the Git repository.
@@ -68,12 +72,14 @@ public class DetermineGitVersion extends ConventionTask {
      */
     @InputDirectory
     @Optional
+    @Nullable
     public File getGitDirectory() {
         return gitDirectory;
     }
 
 
-    @Input
+    @Internal
+    @Nullable
     public RulesContainer getRules() {
         return rules;
     }
@@ -113,6 +119,7 @@ public class DetermineGitVersion extends ConventionTask {
     @Nullable
     @Internal
     public SemVersion getCachedVersion() throws IOException {
+        File targetFile = getTargetFile();
         if (targetFile != null && targetFile.exists()) {
             List<String> lines = Files.readAllLines(targetFile.toPath());
             if (lines != null && !lines.isEmpty()) {
@@ -129,19 +136,45 @@ public class DetermineGitVersion extends ConventionTask {
      */
     @TaskAction
     public void determineVersion() throws IOException {
-        GitVersionExtension gitVersion = getProject().getExtensions().getByType(GitVersionExtension.class);
-        SemVersion version = gitVersion.determineVersion();
+        SemVersion version = doDetermineVersion();
         writeVersionToOutputFile(version);
+    }
+
+
+    @Nonnull
+    private SemVersion doDetermineVersion() {
+
+        RulesContainerInternal rules = (RulesContainerInternal) getRules();
+        if (rules == null) {
+            GitVersionExtension gitVersion = getProject().getExtensions().getByType(GitVersionExtension.class);
+            rules = (RulesContainerInternal) gitVersion.getRules();
+        }
+
+        File gitDir = getGitDirectory();
+        if (gitDir == null) {
+            return rules.getBaseVersion().toImmutable();
+        }
+
+        // Obtain the GitRepositoryFactory from the plugin. (This should better be done by some
+        // dependency injection mechanism, but Gradle currently does not allow us to register custom
+        // objects into its ServiceRegistry)
+        GitVersionPlugin plugin = getProject().getPlugins().findPlugin(GitVersionPlugin.class);
+        GitRepositoryFactory gitRepositoryFactory = plugin.getGitRepositoryFactory();
+
+        try (CloseableGitRepository gitRepository = gitRepositoryFactory.getRepository(gitDir)) {
+            VersioningRules versioningRules = rules.getVersioningRules();
+            return versioningRules.evaluate(getProject(), gitRepository);
+        }
     }
 
 
     private void writeVersionToOutputFile(SemVersion version) throws IOException {
 
-        File targetDirectory = targetFile.getParentFile();
+        File targetDirectory = getTargetFile().getParentFile();
         //noinspection ResultOfMethodCallIgnored
         targetDirectory.mkdirs();
 
-        try (Writer writer = new FileWriter(targetFile)) {
+        try (Writer writer = new FileWriter(getTargetFile())) {
             writer.write(version.toString());
         }
     }

@@ -31,7 +31,7 @@ public class GitVersionExtension {
     private final RulesContainerInternal rules = new DefaultRulesContainer();
 
 
-    GitVersionExtension(Project project, GitRepositoryFactory gitRepositoryFactory) {
+    public GitVersionExtension(Project project, GitRepositoryFactory gitRepositoryFactory) {
         this.project = project;
         this.gitRepositoryFactory = gitRepositoryFactory;
     }

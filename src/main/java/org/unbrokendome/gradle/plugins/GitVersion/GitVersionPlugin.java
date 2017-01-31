@@ -13,12 +13,16 @@ import org.unbrokendome.gradle.plugins.gitversion.tasks.DetermineGitVersion;
 import org.unbrokendome.gradle.plugins.gitversion.tasks.ShowGitVersion;
 
 
+@SuppressWarnings("WeakerAccess")
 public class GitVersionPlugin implements Plugin<Project> {
 
     public static final String GITVERSION_EXTENSION_NAME = "gitVersion";
 
     static final String DETERMINE_GITVERSION_TASK_NAME = "determineGitVersion";
     static final String SHOW_GITVERSION_TASK_NAME = "showGitVersion";
+
+    private final GitRepositoryFactory gitRepositoryFactory =
+            new EnvironmentAwareGitRepositoryFactory(new JGitRepositoryFactory());
 
 
     @Override
@@ -31,14 +35,11 @@ public class GitVersionPlugin implements Plugin<Project> {
     }
 
 
+    @Nonnull
     private GitVersionExtension installGitVersionExtension(Project project) {
-        GitRepositoryFactory gitRepositoryFactory =
-                new EnvironmentAwareGitRepositoryFactory(new JGitRepositoryFactory());
-
-        GitVersionExtension extension = new GitVersionExtension(project, gitRepositoryFactory);
-        project.getExtensions().add(GITVERSION_EXTENSION_NAME, extension);
-
-        return extension;
+        return project.getExtensions().create(GITVERSION_EXTENSION_NAME,
+                GitVersionExtension.class,
+                project, gitRepositoryFactory);
     }
 
 
@@ -47,8 +48,8 @@ public class GitVersionPlugin implements Plugin<Project> {
         DetermineGitVersion determineVersionTask = project.getTasks().create(
                 DETERMINE_GITVERSION_TASK_NAME, DetermineGitVersion.class);
 
-        determineVersionTask.conventionMapping("repositoryLocation",
-                project::getProjectDir);
+        determineVersionTask.setRepositoryLocation(project.getProjectDir());
+
         determineVersionTask.conventionMapping("targetFile",
                 () -> new File(project.getBuildDir(), "gitversion/gitversion"));
         determineVersionTask.conventionMapping("rules",
@@ -60,9 +61,11 @@ public class GitVersionPlugin implements Plugin<Project> {
     private ShowGitVersion createShowGitVersionTask(Project project, DetermineGitVersion determineVersionTask) {
         ShowGitVersion showGitVersionTask = project.getTasks().create(
                 SHOW_GITVERSION_TASK_NAME, ShowGitVersion.class);
-        showGitVersionTask.conventionMapping("fromTask",
-                () -> determineVersionTask);
-
+        showGitVersionTask.setFromTask(determineVersionTask);
         return showGitVersionTask;
+    }
+
+    public GitRepositoryFactory getGitRepositoryFactory() {
+        return gitRepositoryFactory;
     }
 }
