@@ -5,6 +5,8 @@ import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Rule
 import spock.lang.Specification
 
+import java.nio.file.Files
+
 
 /**
  * Integration test with a "real" Git repository. Creates a bare git repo and makes some commits to it, the first
@@ -17,7 +19,8 @@ class GitVersionPluginIntegrationTest extends Specification {
 
     @Rule TestRepository testRepository
 
-    static final String buildFileContents = '''
+
+    static final String BUILD_FILE_PLUGIN_AND_RULES = '''
         plugins {
             id 'org.unbroken-dome.gitversion'
         }
@@ -38,8 +41,11 @@ class GitVersionPluginIntegrationTest extends Specification {
                     matches[2].toInteger(),
                     countCommitsSince(branchPoint()))
             }
-        }
-        
+        }'''
+
+
+    static final String BUILD_FILE_PRINT_VERSION = BUILD_FILE_PLUGIN_AND_RULES + '''
+
         version = gitVersion.determineVersion()
         
         task printVersion {
@@ -48,7 +54,7 @@ class GitVersionPluginIntegrationTest extends Specification {
     '''
 
 
-    private void setupRepository() {
+    private void setupRepository(String buildFileContents) {
         /*
          * Commit graph:
          *
@@ -84,7 +90,7 @@ class GitVersionPluginIntegrationTest extends Specification {
 
     def "master branch"() {
         given:
-            setupRepository()
+            setupRepository(BUILD_FILE_PRINT_VERSION)
             def workingDir = testRepository.cloneAndCheckout('master')
 
         when:
@@ -104,7 +110,7 @@ class GitVersionPluginIntegrationTest extends Specification {
 
     def "release branch"() {
         given:
-            setupRepository()
+            setupRepository(BUILD_FILE_PRINT_VERSION)
             def workingDir = testRepository.cloneAndCheckout('release/1.0')
 
         when:
@@ -119,5 +125,47 @@ class GitVersionPluginIntegrationTest extends Specification {
             buildResult.task(':printVersion').outcome == TaskOutcome.SUCCESS
         and:
             buildResult.output.trim() == '1.0.2'
+    }
+
+
+    def "determineGitVersion task"() {
+        given:
+            setupRepository(BUILD_FILE_PLUGIN_AND_RULES)
+            def workingDir = testRepository.cloneAndCheckout('master')
+
+        when:
+            def buildResult = GradleRunner.create()
+                .withProjectDir(workingDir)
+                .withArguments('determineGitVersion', '--stacktrace')
+                .withPluginClasspath()
+                .withDebug(true)
+                .build()
+
+        then:
+            buildResult.task(':determineGitVersion').outcome == TaskOutcome.SUCCESS
+        and:
+            def versionFile = workingDir.toPath().resolve('build/gitversion/gitversion')
+            Files.exists(versionFile)
+            versionFile.readLines() == [ '1.1.0-master' ]
+    }
+
+
+    def "showGitVersion task"() {
+        given:
+            setupRepository(BUILD_FILE_PLUGIN_AND_RULES)
+            def workingDir = testRepository.cloneAndCheckout('master')
+
+        when:
+            def buildResult = GradleRunner.create()
+                    .withProjectDir(workingDir)
+                    .withArguments('showGitVersion', '--stacktrace')
+                    .withPluginClasspath()
+                    .withDebug(true)
+                    .build()
+
+        then:
+            buildResult.task(':determineGitVersion').outcome == TaskOutcome.SUCCESS
+        and:
+            buildResult.output.readLines().contains '1.1.0-master'
     }
 }
