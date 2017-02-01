@@ -6,7 +6,6 @@ import javax.annotation.Nonnull;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.unbrokendome.gradle.plugins.gitversion.model.EnvironmentAwareGitRepositoryFactory;
 import org.unbrokendome.gradle.plugins.gitversion.model.GitRepositoryFactory;
 import org.unbrokendome.gradle.plugins.gitversion.model.jgit.JGitRepositoryFactory;
 import org.unbrokendome.gradle.plugins.gitversion.tasks.DetermineGitVersion;
@@ -21,8 +20,7 @@ public class GitVersionPlugin implements Plugin<Project> {
     static final String DETERMINE_GITVERSION_TASK_NAME = "determineGitVersion";
     static final String SHOW_GITVERSION_TASK_NAME = "showGitVersion";
 
-    private final GitRepositoryFactory gitRepositoryFactory =
-            new EnvironmentAwareGitRepositoryFactory(new JGitRepositoryFactory());
+    private final GitRepositoryFactory gitRepositoryFactory = new JGitRepositoryFactory();
 
 
     @Override
@@ -54,6 +52,8 @@ public class GitVersionPlugin implements Plugin<Project> {
                 () -> new File(project.getBuildDir(), "gitversion/gitversion"));
         determineVersionTask.conventionMapping("rules",
                 extension::getRules);
+        determineVersionTask.conventionMapping("overrideBranchName",
+                extension::getOverrideBranchName);
         return determineVersionTask;
     }
 

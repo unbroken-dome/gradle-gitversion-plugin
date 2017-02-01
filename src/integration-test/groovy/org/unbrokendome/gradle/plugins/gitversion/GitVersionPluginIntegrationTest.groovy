@@ -1,5 +1,6 @@
 package org.unbrokendome.gradle.plugins.gitversion
 
+import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Rule
@@ -18,6 +19,8 @@ import java.nio.file.Files
 class GitVersionPluginIntegrationTest extends Specification {
 
     @Rule TestRepository testRepository
+
+    private BuildResult buildResult
 
 
     static final String BUILD_FILE_PLUGIN_AND_RULES = '''
@@ -51,6 +54,11 @@ class GitVersionPluginIntegrationTest extends Specification {
         task printVersion {
             doLast { println project.version }
         }
+    '''
+
+
+    static final String BUILD_FILE_OVERRIDE_BRANCH_NAME = BUILD_FILE_PLUGIN_AND_RULES + '''
+        gitVersion.overrideBranchName = project.getProperty('gitBranch')
     '''
 
 
@@ -94,12 +102,7 @@ class GitVersionPluginIntegrationTest extends Specification {
             def workingDir = testRepository.cloneAndCheckout('master')
 
         when:
-            def buildResult = GradleRunner.create()
-                    .withProjectDir(workingDir)
-                    .withArguments('printVersion', '--stacktrace', '-q')
-                    .withPluginClasspath()
-                    .withDebug(true)
-                    .build()
+            runGradleBuild('printVersion', '--stacktrace', '-q')
 
         then:
             buildResult.task(':printVersion').outcome == TaskOutcome.SUCCESS
@@ -114,12 +117,7 @@ class GitVersionPluginIntegrationTest extends Specification {
             def workingDir = testRepository.cloneAndCheckout('release/1.0')
 
         when:
-            def buildResult = GradleRunner.create()
-                    .withProjectDir(workingDir)
-                    .withArguments('printVersion', '--stacktrace', '-q')
-                    .withPluginClasspath()
-                    .withDebug(true)
-                    .build()
+            runGradleBuild('printVersion', '--stacktrace', '-q')
 
         then:
             buildResult.task(':printVersion').outcome == TaskOutcome.SUCCESS
@@ -134,19 +132,12 @@ class GitVersionPluginIntegrationTest extends Specification {
             def workingDir = testRepository.cloneAndCheckout('master')
 
         when:
-            def buildResult = GradleRunner.create()
-                .withProjectDir(workingDir)
-                .withArguments('determineGitVersion', '--stacktrace')
-                .withPluginClasspath()
-                .withDebug(true)
-                .build()
+            runGradleBuild('determineGitVersion', '--stacktrace')
 
         then:
             buildResult.task(':determineGitVersion').outcome == TaskOutcome.SUCCESS
         and:
-            def versionFile = workingDir.toPath().resolve('build/gitversion/gitversion')
-            Files.exists(versionFile)
-            versionFile.readLines() == [ '1.1.0-master' ]
+            getContentsFromVersionFile() == '1.1.0-master'
     }
 
 
@@ -156,16 +147,47 @@ class GitVersionPluginIntegrationTest extends Specification {
             def workingDir = testRepository.cloneAndCheckout('master')
 
         when:
-            def buildResult = GradleRunner.create()
-                    .withProjectDir(workingDir)
-                    .withArguments('showGitVersion', '--stacktrace')
-                    .withPluginClasspath()
-                    .withDebug(true)
-                    .build()
+            runGradleBuild('showGitVersion', '--stacktrace')
 
         then:
             buildResult.task(':determineGitVersion').outcome == TaskOutcome.SUCCESS
         and:
             buildResult.output.readLines().contains '1.1.0-master'
+    }
+
+
+    def "detached head and build parameter for branch name"() {
+        /* This test uses a project property (= build parameter) to override the branch name
+           in a detached-head scenario. We cannot use environment variables with Gradle TestKit,
+           but this should be close enough. */
+        given:
+            setupRepository(BUILD_FILE_OVERRIDE_BRANCH_NAME)
+            testRepository.cloneAndCheckout('master')
+            testRepository.detach()
+
+        when:
+            runGradleBuild('determineGitVersion', '--stacktrace', '-PgitBranch=master')
+
+        then:
+            buildResult.task(':determineGitVersion').outcome == TaskOutcome.SUCCESS
+        and:
+            getContentsFromVersionFile() == '1.1.0-master'
+    }
+
+
+    private void runGradleBuild(String... arguments) {
+        buildResult = GradleRunner.create()
+                .withProjectDir(testRepository.workingDir)
+                .withArguments(arguments)
+                .withPluginClasspath()
+                .withDebug(true)
+                .build()
+    }
+
+
+    private String getContentsFromVersionFile() {
+        def versionFile = testRepository.workingDir.toPath().resolve('build/gitversion/gitversion')
+        assert Files.exists(versionFile)
+        return versionFile.withReader { it.readLine().trim() }
     }
 }

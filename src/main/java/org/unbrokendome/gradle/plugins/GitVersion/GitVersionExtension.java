@@ -14,7 +14,9 @@ import org.unbrokendome.gradle.plugins.gitversion.internal.DefaultRulesContainer
 import org.unbrokendome.gradle.plugins.gitversion.internal.LazyVersion;
 import org.unbrokendome.gradle.plugins.gitversion.internal.RulesContainerInternal;
 import org.unbrokendome.gradle.plugins.gitversion.model.CloseableGitRepository;
+import org.unbrokendome.gradle.plugins.gitversion.model.GitRepository;
 import org.unbrokendome.gradle.plugins.gitversion.model.GitRepositoryFactory;
+import org.unbrokendome.gradle.plugins.gitversion.model.GitRepositoryWithBranchName;
 import org.unbrokendome.gradle.plugins.gitversion.tasks.DetermineGitVersion;
 import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion;
 
@@ -29,6 +31,7 @@ public class GitVersionExtension {
     private final Project project;
     private final GitRepositoryFactory gitRepositoryFactory;
     private final RulesContainerInternal rules = new DefaultRulesContainer();
+    private String overrideBranchName;
 
 
     public GitVersionExtension(Project project, GitRepositoryFactory gitRepositoryFactory) {
@@ -68,8 +71,17 @@ public class GitVersionExtension {
     @Nonnull
     public SemVersion determineVersion() {
         try (CloseableGitRepository gitRepository = gitRepositoryFactory.getRepository(project.getProjectDir())) {
+
+            /* If the branch should be overridden, decorate the GitRepository */
+            GitRepository actualGitRepository;
+            if (overrideBranchName != null) {
+                actualGitRepository = new GitRepositoryWithBranchName(gitRepository, overrideBranchName);
+            } else {
+                actualGitRepository = gitRepository;
+            }
+
             VersioningRules versioningRules = rules.getVersioningRules();
-            return versioningRules.evaluate(project, gitRepository);
+            return versioningRules.evaluate(project, actualGitRepository);
         }
     }
 
@@ -104,5 +116,32 @@ public class GitVersionExtension {
     @Nonnull
     public Object getLazyVersion() {
         return new LazyVersion(this::determineVersion);
+    }
+
+
+    /**
+     * Gets the branch name that will be used for versioning.
+     *
+     * @return the branch name, or {@code null} if the repository HEAD is used
+     */
+    @Nullable
+    public String getOverrideBranchName() {
+        return overrideBranchName;
+    }
+
+
+    /**
+     * Sets the branch name that should be used for versioning.
+     *
+     * This is intended for certain situations
+     * (like running on Jenkins CI) where it is necessary to pretend being on another branch than the
+     * repository actually is.
+     *
+     * <p>By default (if this property is {@code null}), the Git repository's HEAD branch is used.</p>
+     *
+     * @param overrideBranchName the branch name, or {@code null} to use the repository HEAD
+     */
+    public void setOverrideBranchName(@Nullable String overrideBranchName) {
+        this.overrideBranchName = overrideBranchName;
     }
 }

@@ -2,6 +2,7 @@ package org.unbrokendome.gradle.plugins.gitversion;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -10,6 +11,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeCommand;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
@@ -78,8 +80,21 @@ public class TestRepository extends ExternalResource {
     }
 
 
+    public void detach() throws GitAPIException, IOException {
+        ObjectId headId = git.getRepository().resolve("HEAD");
+        git.checkout()
+                .setName(headId.name())
+                .call();
+    }
+
+
     public File getWorkingDir() {
         return workingDir;
+    }
+
+
+    public Git getGit() {
+        return git;
     }
 
 

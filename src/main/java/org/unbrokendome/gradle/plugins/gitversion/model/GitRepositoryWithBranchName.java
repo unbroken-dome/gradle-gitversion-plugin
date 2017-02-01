@@ -9,10 +9,12 @@ import java.util.Collection;
 public final class GitRepositoryWithBranchName implements CloseableGitRepository {
 
     private final CloseableGitRepository gitRepository;
+
+    @Nullable
     private final String branchName;
 
 
-    GitRepositoryWithBranchName(CloseableGitRepository gitRepository, String branchName) {
+    public GitRepositoryWithBranchName(CloseableGitRepository gitRepository, @Nullable String branchName) {
         this.gitRepository = gitRepository;
         this.branchName = branchName;
     }

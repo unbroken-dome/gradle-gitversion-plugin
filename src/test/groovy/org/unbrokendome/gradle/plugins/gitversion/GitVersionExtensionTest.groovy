@@ -53,4 +53,19 @@ class GitVersionExtensionTest extends Specification {
         then:
             version == SemVersion.create(1, 2, 3)
     }
+
+
+    def "overridden branch name"() {
+        given:
+            branchName = null
+        and:
+            gitVersion.overrideBranchName = 'master'
+            gitVersion.rules.onBranch('master') {
+                version.set(1, 2, 3)
+            }
+        when:
+            def version = gitVersion.determineVersion()
+        then:
+            version == SemVersion.create(1, 2, 3)
+    }
 }

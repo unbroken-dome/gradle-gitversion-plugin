@@ -22,10 +22,18 @@ public class MockGitRepositoryFactory implements GitRepositoryFactory {
 
     @Override
     public CloseableGitRepository getRepository(File dir) {
-        return MockGitRepository.builder()
+        MockGitRepositoryBuilder builder = MockGitRepository.builder()
                 .setWorkingDir(dir)
                 .checkoutNew("master")
-                .commit("initial commit")
-                .build();
+                .commit("initial commit");
+
+        String branchName = branchNameSupplier.get();
+        if (branchName != null) {
+            builder.checkout(branchName);
+        } else {
+            builder.detach();
+        }
+
+        return builder.build();
     }
 }
