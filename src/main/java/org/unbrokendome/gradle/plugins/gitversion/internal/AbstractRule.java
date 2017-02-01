@@ -4,15 +4,15 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.gradle.api.Action;
+import org.gradle.api.logging.Logging;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.unbrokendome.gradle.plugins.gitversion.core.Rule;
 import org.unbrokendome.gradle.plugins.gitversion.core.RuleContext;
 
 
 public abstract class AbstractRule<TContext extends RuleContext, TMatchResult extends MatchResult> implements Rule {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = Logging.getLogger(getClass());
 
     private final Action<TContext> action;
 
