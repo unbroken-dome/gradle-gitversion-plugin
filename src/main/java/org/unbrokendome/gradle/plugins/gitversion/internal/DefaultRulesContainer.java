@@ -27,7 +27,7 @@ public class DefaultRulesContainer implements RulesContainer, RulesContainerInte
 
     @Override
     public void always(Action<RuleContext> action) {
-        Rule rule = new SimpleRule(action);
+        Rule rule = new AlwaysRule(action);
         versioningRules.addRule(rule);
     }
 
@@ -48,22 +48,21 @@ public class DefaultRulesContainer implements RulesContainer, RulesContainerInte
 
     @Override
     public void onDetachedHead(Action<RuleContext> action) {
-        Rule rule = new SimplePredicateMatchingRule(action,
-                context -> context.getRepository().getCurrentBranch() == null);
+        Rule rule = new DetachedHeadRule(action);
         versioningRules.addRule(rule);
     }
 
 
     @Override
     public void before(Action<RuleContext> action) {
-        Rule rule = new SimpleRule(action);
+        Rule rule = new AlwaysRule(action);
         versioningRules.addBeforeRule(rule);
     }
 
 
     @Override
     public void after(Action<RuleContext> action) {
-        Rule rule = new SimpleRule(action);
+        Rule rule = new AlwaysRule(action);
         versioningRules.addAfterRule(rule);
     }
 

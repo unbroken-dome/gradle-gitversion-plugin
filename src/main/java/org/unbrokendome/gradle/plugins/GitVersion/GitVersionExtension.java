@@ -13,6 +13,7 @@ import org.unbrokendome.gradle.plugins.gitversion.core.VersioningRules;
 import org.unbrokendome.gradle.plugins.gitversion.internal.DefaultRulesContainer;
 import org.unbrokendome.gradle.plugins.gitversion.internal.LazyVersion;
 import org.unbrokendome.gradle.plugins.gitversion.internal.RulesContainerInternal;
+import org.unbrokendome.gradle.plugins.gitversion.internal.Versioning;
 import org.unbrokendome.gradle.plugins.gitversion.model.CloseableGitRepository;
 import org.unbrokendome.gradle.plugins.gitversion.model.GitRepository;
 import org.unbrokendome.gradle.plugins.gitversion.model.GitRepositoryFactory;
@@ -70,19 +71,13 @@ public class GitVersionExtension {
 
     @Nonnull
     public SemVersion determineVersion() {
-        try (CloseableGitRepository gitRepository = gitRepositoryFactory.getRepository(project.getProjectDir())) {
+        Versioning versioning = new Versioning(project,
+                rules,
+                gitRepositoryFactory,
+                overrideBranchName,
+                project.getProjectDir());
 
-            /* If the branch should be overridden, decorate the GitRepository */
-            GitRepository actualGitRepository;
-            if (overrideBranchName != null) {
-                actualGitRepository = new GitRepositoryWithBranchName(gitRepository, overrideBranchName);
-            } else {
-                actualGitRepository = gitRepository;
-            }
-
-            VersioningRules versioningRules = rules.getVersioningRules();
-            return versioningRules.evaluate(project, actualGitRepository);
-        }
+        return versioning.determineVersion();
     }
 
 

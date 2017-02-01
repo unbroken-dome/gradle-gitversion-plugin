@@ -1,7 +1,6 @@
 package org.unbrokendome.gradle.plugins.gitversion.internal;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.gradle.api.Action;
 import org.gradle.api.logging.Logging;
@@ -10,7 +9,7 @@ import org.unbrokendome.gradle.plugins.gitversion.core.Rule;
 import org.unbrokendome.gradle.plugins.gitversion.core.RuleContext;
 
 
-public abstract class AbstractRule<TContext extends RuleContext, TMatchResult extends MatchResult> implements Rule {
+public abstract class AbstractRule<TContext extends RuleContext> implements Rule {
 
     private final Logger logger = Logging.getLogger(getClass());
 
@@ -24,24 +23,30 @@ public abstract class AbstractRule<TContext extends RuleContext, TMatchResult ex
 
     @Override
     public final boolean apply(RuleEvaluationContext evaluationContext) {
-        TMatchResult matchResult = match(evaluationContext);
-        if (matchResult != null && matchResult.isMatch()) {
+
+        MatchResult matchResult = match(evaluationContext);
+        if (matchResult.isMatch()) {
+            logger.info("Rule [{}] matched because: {}", this, matchResult.getDescription());
+
             TContext ruleContext = createContext(evaluationContext, matchResult);
             action.execute(ruleContext);
 
             if (ruleContext.isSkipOtherRules()) {
-                logger.debug("Rule body requested to skip evaluation of other rules");
+                logger.info("Rule body requested to skip evaluation of other rules");
                 return false;
             }
+
+        } else {
+            logger.info("Rule [{}] did not match because: {}", this, matchResult.getDescription());
         }
         return true;
     }
 
 
-    @Nullable
-    protected abstract TMatchResult match(RuleEvaluationContext evaluationContext);
+    @Nonnull
+    protected abstract MatchResult match(RuleEvaluationContext evaluationContext);
 
 
     @Nonnull
-    protected abstract TContext createContext(RuleEvaluationContext evaluationContext, TMatchResult matchResult);
+    protected abstract TContext createContext(RuleEvaluationContext evaluationContext, MatchResult matchResult);
 }

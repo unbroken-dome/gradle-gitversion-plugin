@@ -11,21 +11,21 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.gradle.api.internal.ConventionTask;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.unbrokendome.gradle.plugins.gitversion.GitVersionExtension;
 import org.unbrokendome.gradle.plugins.gitversion.GitVersionPlugin;
 import org.unbrokendome.gradle.plugins.gitversion.core.RulesContainer;
-import org.unbrokendome.gradle.plugins.gitversion.core.VersioningRules;
 import org.unbrokendome.gradle.plugins.gitversion.internal.RulesContainerInternal;
-import org.unbrokendome.gradle.plugins.gitversion.model.CloseableGitRepository;
-import org.unbrokendome.gradle.plugins.gitversion.model.GitRepository;
+import org.unbrokendome.gradle.plugins.gitversion.internal.Versioning;
 import org.unbrokendome.gradle.plugins.gitversion.model.GitRepositoryFactory;
-import org.unbrokendome.gradle.plugins.gitversion.model.GitRepositoryWithBranchName;
 import org.unbrokendome.gradle.plugins.gitversion.util.RepositoryUtils;
 import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion;
 
@@ -35,6 +35,8 @@ import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class DetermineGitVersion extends ConventionTask {
+
+    private final Logger logger = Logging.getLogger(getClass());
 
     private File repositoryLocation;
     private File gitDirectory;
@@ -183,40 +185,34 @@ public class DetermineGitVersion extends ConventionTask {
             rules = (RulesContainerInternal) gitVersion.getRules();
         }
 
-        File gitDir = getGitDirectory();
-        if (gitDir == null) {
-            return rules.getBaseVersion().toImmutable();
-        }
-
         // Obtain the GitRepositoryFactory from the plugin. (This should better be done by some
         // dependency injection mechanism, but Gradle currently does not allow us to register custom
         // objects into its ServiceRegistry)
         GitVersionPlugin plugin = getProject().getPlugins().findPlugin(GitVersionPlugin.class);
         GitRepositoryFactory gitRepositoryFactory = plugin.getGitRepositoryFactory();
 
-        try (CloseableGitRepository gitRepository = gitRepositoryFactory.getRepository(gitDir)) {
+        Versioning versioning = new Versioning(getProject(),
+                rules,
+                gitRepositoryFactory,
+                getOverrideBranchName(),
+                getGitDirectory());
 
-            /* If the branch should be overridden, decorate the GitRepository */
-            GitRepository actualGitRepository;
-            if (getOverrideBranchName() != null) {
-                actualGitRepository = new GitRepositoryWithBranchName(gitRepository, getOverrideBranchName());
-            } else {
-                actualGitRepository = gitRepository;
-            }
-
-            VersioningRules versioningRules = rules.getVersioningRules();
-            return versioningRules.evaluate(getProject(), actualGitRepository);
-        }
+        return versioning.determineVersion();
     }
 
 
     private void writeVersionToOutputFile(SemVersion version) throws IOException {
 
-        File targetDirectory = getTargetFile().getParentFile();
+        // always use the getter to allow Gradle's convention properties to kick in
+        File targetFile = getTargetFile();
+
+        logger.info("Writing version \"{}\" to target file: {}", version, targetFile);
+
+        File targetDirectory = targetFile.getParentFile();
         //noinspection ResultOfMethodCallIgnored
         targetDirectory.mkdirs();
 
-        try (Writer writer = new FileWriter(getTargetFile())) {
+        try (Writer writer = new FileWriter(targetFile)) {
             writer.write(version.toString());
         }
     }

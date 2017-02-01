@@ -166,7 +166,7 @@ class GitVersionPluginIntegrationTest extends Specification {
             testRepository.detach()
 
         when:
-            runGradleBuild('determineGitVersion', '--stacktrace', '-PgitBranch=master')
+            runGradleBuild('determineGitVersion', '--stacktrace', '--debug', '-PgitBranch=master')
 
         then:
             buildResult.task(':determineGitVersion').outcome == TaskOutcome.SUCCESS
@@ -181,6 +181,7 @@ class GitVersionPluginIntegrationTest extends Specification {
                 .withArguments(arguments)
                 .withPluginClasspath()
                 .withDebug(true)
+                .forwardOutput()
                 .build()
     }
 

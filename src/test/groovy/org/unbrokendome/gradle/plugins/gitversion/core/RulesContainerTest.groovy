@@ -1,13 +1,19 @@
 package org.unbrokendome.gradle.plugins.gitversion.core
 
+import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.api.logging.LogLevel
+import org.gradle.internal.logging.events.LogLevelChangeEvent
+import org.gradle.internal.logging.sink.OutputEventRenderer
+import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext
 import org.gradle.testfixtures.ProjectBuilder
+import org.junit.Before
+import org.slf4j.impl.StaticLoggerBinder
 import org.unbrokendome.gradle.plugins.gitversion.internal.DefaultRulesContainer
 import org.unbrokendome.gradle.plugins.gitversion.model.MockGitRepository
 import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Subject
-
 
 class RulesContainerTest extends Specification {
 
@@ -17,6 +23,14 @@ class RulesContainerTest extends Specification {
     @Shared project = ProjectBuilder.builder().build()
 
     String branchName = null
+
+
+    @Before
+    void setupLogLevel() {
+        def context = StaticLoggerBinder.singleton.loggerFactory as OutputEventListenerBackedLoggerContext
+        context.setLevel(LogLevel.DEBUG)
+        context.outputEventListener.onOutput(new LogLevelChangeEvent(LogLevel.DEBUG))
+    }
 
 
     def "baseVersion can be set as string"() {

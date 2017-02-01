@@ -117,4 +117,10 @@ public class MutableSemVersionImpl implements MutableSemVersion {
         this.buildMetadata = buildMetadata;
         return this;
     }
+
+
+    @Override
+    public String toString() {
+        return toImmutable().toString();
+    }
 }

@@ -6,9 +6,13 @@ import org.unbrokendome.gradle.plugins.gitversion.core.*;
 import javax.annotation.Nonnull;
 
 
-public class SimpleRule extends AbstractRule<RuleContext, MatchResult> {
+public final class AlwaysRule extends AbstractSimpleRule {
 
-    SimpleRule(Action<RuleContext> action) {
+    private static final MatchResult ALWAYS_MATCH = new SimpleMatchResult(true,
+            "this rule always matches");
+
+
+    AlwaysRule(Action<RuleContext> action) {
         super(action);
     }
 
@@ -16,7 +20,7 @@ public class SimpleRule extends AbstractRule<RuleContext, MatchResult> {
     @Nonnull
     @Override
     protected MatchResult match(RuleEvaluationContext evaluationContext) {
-        return MatchResult.TRUE;
+        return ALWAYS_MATCH;
     }
 
 
@@ -24,5 +28,11 @@ public class SimpleRule extends AbstractRule<RuleContext, MatchResult> {
     @Override
     protected SimpleRuleContext createContext(RuleEvaluationContext evaluationContext, MatchResult matchResult) {
         return new SimpleRuleContext(evaluationContext);
+    }
+
+
+    @Override
+    public String toString() {
+        return "always";
     }
 }

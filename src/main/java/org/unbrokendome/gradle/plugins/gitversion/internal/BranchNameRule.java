@@ -1,18 +1,13 @@
 package org.unbrokendome.gradle.plugins.gitversion.internal;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.gradle.api.Action;
-import org.gradle.api.logging.Logging;
-import org.slf4j.Logger;
 import org.unbrokendome.gradle.plugins.gitversion.core.RuleContext;
 import org.unbrokendome.gradle.plugins.gitversion.model.GitBranch;
 
 
-public class BranchNameRule extends AbstractRule<RuleContext, MatchResult> {
-
-    private final Logger logger = Logging.getLogger(getClass());
+public class BranchNameRule extends AbstractSimpleRule {
 
     private final String branchName;
 
@@ -23,32 +18,29 @@ public class BranchNameRule extends AbstractRule<RuleContext, MatchResult> {
     }
 
 
-    @Nullable
+    @Nonnull
     @Override
     protected MatchResult match(RuleEvaluationContext evaluationContext) {
 
-        logger.debug("Determining if branch rule \"{}\" is a match...", branchName);
-
         GitBranch currentBranch = evaluationContext.getRepository().getCurrentBranch();
-        if (currentBranch == null) {
-            logger.debug("Rule skipped: \"{}\": current branch is not set", branchName);
-            return MatchResult.FALSE;
 
-        } else if (branchName.equals(currentBranch.getShortName())) {
-            logger.info("Rule match: current branch is \"{}\"", currentBranch.getShortName());
-            return MatchResult.TRUE;
-
+        String matchDescription;
+        if (currentBranch != null) {
+            matchDescription = "current branch name is \"" + currentBranch.getShortName() + "\"";
         } else {
-            logger.debug("Rule skipped: \"{}\"; current branch is \"{}\"",
-                    branchName, currentBranch.getShortName());
-            return MatchResult.FALSE;
+            matchDescription = "current branch is not set";
+        }
+
+        if (currentBranch != null && branchName.equals(currentBranch.getShortName())) {
+            return MatchResult.match(matchDescription);
+        } else {
+            return MatchResult.mismatch(matchDescription);
         }
     }
 
 
-    @Nonnull
     @Override
-    protected RuleContext createContext(RuleEvaluationContext evaluationContext, MatchResult matchResult) {
-        return new SimpleRuleContext(evaluationContext);
+    public String toString() {
+        return "branch name \"" + branchName + "\"";
     }
 }

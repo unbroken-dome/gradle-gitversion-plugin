@@ -4,18 +4,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.gradle.api.Action;
-import org.gradle.api.logging.Logging;
-import org.slf4j.Logger;
 import org.unbrokendome.gradle.plugins.gitversion.core.PatternMatchRuleContext;
 import org.unbrokendome.gradle.plugins.gitversion.model.GitBranch;
 
 
-public class PatternMatchingBranchRule extends AbstractRule<PatternMatchRuleContext, PatternMatchingMatchResult> {
+public final class PatternMatchingBranchRule extends AbstractRule<PatternMatchRuleContext> {
 
-    private final Logger logger = Logging.getLogger(getClass());
     private final Pattern pattern;
 
 
@@ -25,26 +21,17 @@ public class PatternMatchingBranchRule extends AbstractRule<PatternMatchRuleCont
     }
 
 
-    @Nullable
+    @Nonnull
     @Override
-    protected PatternMatchingMatchResult match(RuleEvaluationContext evaluationContext) {
+    protected MatchResult match(RuleEvaluationContext evaluationContext) {
         GitBranch currentBranch = evaluationContext.getRepository().getCurrentBranch();
         String branchName = currentBranch != null ? currentBranch.getShortName() : null;
         if (branchName != null) {
             Matcher matcher = pattern.matcher(branchName);
-            if (matcher.matches()) {
-                logger.info("Rule match: pattern \"{}\", matches current branch name \"{}\"",
-                        pattern, branchName);
-            } else {
-                logger.debug("Rule skipped: pattern \"{}\"; does not match current branch name \"{}\"",
-                        pattern, branchName);
-            }
-
             return new PatternMatchingMatchResult(matcher);
 
         } else {
-            logger.debug("Rule skipped: pattern \"{}\", current branch is not set", pattern);
-            return null;
+            return MatchResult.mismatch("current branch is not set");
         }
     }
 
@@ -52,8 +39,15 @@ public class PatternMatchingBranchRule extends AbstractRule<PatternMatchRuleCont
     @Nonnull
     @Override
     protected PatternMatchRuleContext createContext(RuleEvaluationContext evaluationContext,
-                                                    PatternMatchingMatchResult matchResult) {
-        DefaultMatcherFacade matches = new DefaultMatcherFacade(matchResult.getMatcher());
+                                                    MatchResult matchResult) {
+        PatternMatchingMatchResult patternMatchResult = (PatternMatchingMatchResult) matchResult;
+        DefaultMatcherFacade matches = new DefaultMatcherFacade(patternMatchResult.getMatcher());
         return new PatternMatchRuleContextImpl(evaluationContext, matches);
+    }
+
+
+    @Override
+    public String toString() {
+        return "branch name pattern \"" + pattern + "\"";
     }
 }
