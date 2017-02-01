@@ -10,6 +10,7 @@ if (gradle.startParameter.taskNames.contains('release')) {
 
 
 task release {
+    dependsOn build
     doLast {
         logger.lifecycle 'Release {} successful', version
     }
