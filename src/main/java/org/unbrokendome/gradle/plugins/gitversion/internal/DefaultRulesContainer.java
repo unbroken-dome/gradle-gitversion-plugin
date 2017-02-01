@@ -2,7 +2,6 @@ package org.unbrokendome.gradle.plugins.gitversion.internal;
 
 import org.gradle.api.Action;
 import org.unbrokendome.gradle.plugins.gitversion.core.*;
-import org.unbrokendome.gradle.plugins.gitversion.model.GitBranch;
 import org.unbrokendome.gradle.plugins.gitversion.version.MutableSemVersion;
 import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion;
 
@@ -35,10 +34,7 @@ public class DefaultRulesContainer implements RulesContainer, RulesContainerInte
 
     @Override
     public void onBranch(String branchName, Action<RuleContext> action) {
-        Rule rule = new SimplePredicateMatchingRule(action, context -> {
-                    GitBranch branch = context.getRepository().getCurrentBranch();
-                    return branch != null && branchName.equals(branch.getShortName());
-                });
+        Rule rule = new BranchNameRule(branchName, action);
         versioningRules.addRule(rule);
     }
 
