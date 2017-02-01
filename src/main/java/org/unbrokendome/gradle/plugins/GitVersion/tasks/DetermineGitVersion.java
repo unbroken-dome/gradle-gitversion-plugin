@@ -11,6 +11,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.gradle.api.internal.ConventionTask;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
@@ -22,7 +23,9 @@ import org.unbrokendome.gradle.plugins.gitversion.core.RulesContainer;
 import org.unbrokendome.gradle.plugins.gitversion.core.VersioningRules;
 import org.unbrokendome.gradle.plugins.gitversion.internal.RulesContainerInternal;
 import org.unbrokendome.gradle.plugins.gitversion.model.CloseableGitRepository;
+import org.unbrokendome.gradle.plugins.gitversion.model.GitRepository;
 import org.unbrokendome.gradle.plugins.gitversion.model.GitRepositoryFactory;
+import org.unbrokendome.gradle.plugins.gitversion.model.GitRepositoryWithBranchName;
 import org.unbrokendome.gradle.plugins.gitversion.util.RepositoryUtils;
 import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion;
 
@@ -36,6 +39,7 @@ public class DetermineGitVersion extends ConventionTask {
     private File repositoryLocation;
     private File gitDirectory;
     private RulesContainer rules;
+    private String overrideBranchName;
     private File targetFile;
 
     /**
@@ -87,6 +91,35 @@ public class DetermineGitVersion extends ConventionTask {
 
     public void setRules(RulesContainer rules) {
         this.rules = rules;
+    }
+
+
+    /**
+     * Gets the branch name that will be used for versioning.
+     *
+     * @return the branch name, or {@code null} if the repository HEAD is used
+     */
+
+    @Input
+    @Optional
+    public String getOverrideBranchName() {
+        return overrideBranchName;
+    }
+
+
+    /**
+     * Sets the branch name that should be used for versioning.
+     *
+     * This is intended for certain situations
+     * (like running on Jenkins CI) where it is necessary to pretend being on another branch than the
+     * repository actually is.
+     *
+     * <p>By default (if this property is {@code null}), the Git repository's HEAD branch is used.</p>
+     *
+     * @param overrideBranchName the branch name, or {@code null} to use the repository HEAD
+     */
+    public void setOverrideBranchName(String overrideBranchName) {
+        this.overrideBranchName = overrideBranchName;
     }
 
 
@@ -162,8 +195,17 @@ public class DetermineGitVersion extends ConventionTask {
         GitRepositoryFactory gitRepositoryFactory = plugin.getGitRepositoryFactory();
 
         try (CloseableGitRepository gitRepository = gitRepositoryFactory.getRepository(gitDir)) {
+
+            /* If the branch should be overridden, decorate the GitRepository */
+            GitRepository actualGitRepository;
+            if (getOverrideBranchName() != null) {
+                actualGitRepository = new GitRepositoryWithBranchName(gitRepository, getOverrideBranchName());
+            } else {
+                actualGitRepository = gitRepository;
+            }
+
             VersioningRules versioningRules = rules.getVersioningRules();
-            return versioningRules.evaluate(getProject(), gitRepository);
+            return versioningRules.evaluate(getProject(), actualGitRepository);
         }
     }
 
