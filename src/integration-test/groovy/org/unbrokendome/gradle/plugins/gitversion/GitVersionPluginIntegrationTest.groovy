@@ -7,6 +7,7 @@ import org.junit.Rule
 import spock.lang.Specification
 
 import java.nio.file.Files
+import java.util.regex.Pattern
 
 
 /**
@@ -99,30 +100,30 @@ class GitVersionPluginIntegrationTest extends Specification {
     def "master branch"() {
         given:
             setupRepository(BUILD_FILE_PRINT_VERSION)
-            def workingDir = testRepository.cloneAndCheckout('master')
+            testRepository.cloneAndCheckout('master')
 
         when:
-            runGradleBuild('printVersion', '--stacktrace', '-q')
+            runGradleBuild('printVersion', '-q')
 
         then:
             buildResult.task(':printVersion').outcome == TaskOutcome.SUCCESS
         and:
-            buildResult.output.trim() == '1.1.0-master'
+            findSystemOutLines() == [ '1.1.0-master' ]
     }
 
 
     def "release branch"() {
         given:
             setupRepository(BUILD_FILE_PRINT_VERSION)
-            def workingDir = testRepository.cloneAndCheckout('release/1.0')
+            testRepository.cloneAndCheckout('release/1.0')
 
         when:
-            runGradleBuild('printVersion', '--stacktrace', '-q')
+            runGradleBuild('printVersion', '-q')
 
         then:
             buildResult.task(':printVersion').outcome == TaskOutcome.SUCCESS
         and:
-            buildResult.output.trim() == '1.0.2'
+            findSystemOutLines() == [ '1.0.2' ]
     }
 
 
@@ -132,7 +133,7 @@ class GitVersionPluginIntegrationTest extends Specification {
             def workingDir = testRepository.cloneAndCheckout('master')
 
         when:
-            runGradleBuild('determineGitVersion', '--stacktrace')
+            runGradleBuild('determineGitVersion')
 
         then:
             buildResult.task(':determineGitVersion').outcome == TaskOutcome.SUCCESS
@@ -147,12 +148,12 @@ class GitVersionPluginIntegrationTest extends Specification {
             def workingDir = testRepository.cloneAndCheckout('master')
 
         when:
-            runGradleBuild('showGitVersion', '--stacktrace')
+            runGradleBuild('showGitVersion')
 
         then:
             buildResult.task(':determineGitVersion').outcome == TaskOutcome.SUCCESS
         and:
-            buildResult.output.readLines().contains '1.1.0-master'
+            findSystemOutLines() == [ '1.1.0-master' ]
     }
 
 
@@ -166,7 +167,7 @@ class GitVersionPluginIntegrationTest extends Specification {
             testRepository.detach()
 
         when:
-            runGradleBuild('determineGitVersion', '--stacktrace', '--debug', '-PgitBranch=master')
+            runGradleBuild('determineGitVersion', '-PgitBranch=master')
 
         then:
             buildResult.task(':determineGitVersion').outcome == TaskOutcome.SUCCESS
@@ -176,9 +177,12 @@ class GitVersionPluginIntegrationTest extends Specification {
 
 
     private void runGradleBuild(String... arguments) {
+
+        List<String> allArgs = arguments.toList() + [ '--debug', '--stacktrace' ]
+
         buildResult = GradleRunner.create()
                 .withProjectDir(testRepository.workingDir)
-                .withArguments(arguments)
+                .withArguments(allArgs)
                 .withPluginClasspath()
                 .withDebug(true)
                 .forwardOutput()
@@ -190,5 +194,30 @@ class GitVersionPluginIntegrationTest extends Specification {
         def versionFile = testRepository.workingDir.toPath().resolve('build/gitversion/gitversion')
         assert Files.exists(versionFile)
         return versionFile.withReader { it.readLine().trim() }
+    }
+
+
+    private List<String> findSystemOutLines() {
+        findLinesInOutput(~/.*\[system\.out] (.*)/)
+    }
+
+
+    private List<String> findLinesInOutput(Pattern pattern) {
+
+        List<String> results = []
+
+        buildResult.output.eachLine {
+            def matcher = (it =~ pattern)
+            if (matcher.matches()) {
+                if (matcher.groupCount() > 0) {
+                    results.add(matcher.group(1))
+                } else {
+                    results.add(matcher.group(0))
+                }
+            }
+            null
+        }
+
+        results
     }
 }
