@@ -176,6 +176,25 @@ class GitVersionPluginIntegrationTest extends Specification {
     }
 
 
+    def "detached head and build parameter for nonexisting branch name"() {
+        /* This test uses a project property (= build parameter) to override the branch name
+           in a detached-head scenario. We cannot use environment variables with Gradle TestKit,
+           but this should be close enough. */
+        given:
+        setupRepository(BUILD_FILE_OVERRIDE_BRANCH_NAME)
+        testRepository.cloneAndCheckout('master')
+        testRepository.detach()
+
+        when:
+        runGradleBuild('determineGitVersion', '-PgitBranch=release/2.0')
+
+        then:
+        buildResult.task(':determineGitVersion').outcome == TaskOutcome.SUCCESS
+        and:
+        getContentsFromVersionFile() == '2.0.0'
+    }
+
+
     private void runGradleBuild(String... arguments) {
 
         List<String> allArgs = arguments.toList() + [ '--debug', '--stacktrace' ]
