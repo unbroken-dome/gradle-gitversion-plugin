@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -130,6 +131,13 @@ public final class JGitRepository implements CloseableGitRepository {
         return repository.getTags().entrySet().stream()
                 .map(tagEntry -> new JGitTag(this, tagEntry.getKey(), tagEntry.getValue()))
                 .collect(Collectors.toList());
+    }
+
+
+    @Nonnull
+    @Override
+    public Set<String> getRemoteNames() {
+        return repository.getRemoteNames();
     }
 
 

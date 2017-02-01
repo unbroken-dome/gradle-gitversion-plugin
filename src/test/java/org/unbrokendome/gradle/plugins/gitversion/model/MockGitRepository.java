@@ -84,6 +84,13 @@ public class MockGitRepository implements CloseableGitRepository {
 
     @Nonnull
     @Override
+    public Set<String> getRemoteNames() {
+        return Collections.singleton("origin");
+    }
+
+
+    @Nonnull
+    @Override
     public CloseableIterator<GitCommit> walk(GitCommit startCommit, WalkMode mode) {
 
         Stack<GitCommit> commitsToVisit = new Stack<>();

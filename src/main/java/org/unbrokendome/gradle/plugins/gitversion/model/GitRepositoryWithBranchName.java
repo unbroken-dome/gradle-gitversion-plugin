@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Collection;
+import java.util.Set;
 
 
 public final class GitRepositoryWithBranchName implements CloseableGitRepository {
@@ -36,14 +37,32 @@ public final class GitRepositoryWithBranchName implements CloseableGitRepository
     @Nullable
     @Override
     public GitBranch getCurrentBranch() {
-        return branchName != null ? gitRepository.getBranch(branchName) : null;
+        return branchName != null ? getBranch(branchName) : null;
     }
 
 
     @Nullable
     @Override
     public GitBranch getBranch(String name) {
-        return gitRepository.getBranch(name);
+
+        // Check if the underlying repository can find the branch
+        GitBranch branch = gitRepository.getBranch(name);
+        if (branch != null) {
+            return branch;
+        }
+
+        if (!name.startsWith("refs/heads/")) {
+            // Try the remote-tracking branches for each remote (e.g. origin/master)
+            for (String remoteName : getRemoteNames()) {
+                String remoteBranchCandidate = "refs/remotes/" + remoteName + "/" + name;
+                branch = gitRepository.getBranch(remoteBranchCandidate);
+                if (branch != null) {
+                    return branch;
+                }
+            }
+        }
+
+        return null;
     }
 
 
@@ -61,9 +80,17 @@ public final class GitRepositoryWithBranchName implements CloseableGitRepository
     }
 
 
+    @Nonnull
     @Override
     public Collection<? extends GitTag> getTags() {
         return gitRepository.getTags();
+    }
+
+
+    @Nonnull
+    @Override
+    public Set<String> getRemoteNames() {
+        return gitRepository.getRemoteNames();
     }
 
 

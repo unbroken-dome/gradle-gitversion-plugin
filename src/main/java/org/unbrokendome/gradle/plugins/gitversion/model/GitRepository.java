@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Collection;
+import java.util.Set;
 
 
 public interface GitRepository extends AutoCloseable {
@@ -24,6 +25,9 @@ public interface GitRepository extends AutoCloseable {
 
     @Nonnull
     Collection<? extends GitTag> getTags();
+
+    @Nonnull
+    Set<String> getRemoteNames();
 
     @Nonnull
     CloseableIterator<GitCommit> walk(GitCommit startCommit, WalkMode mode);
