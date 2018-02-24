@@ -24,9 +24,27 @@ public interface RulesContainer {
     }
 
 
+    /**
+     * Adds a rule that will always be evaluated. It is equivalent to a branch rule whose condition always
+     * matches.
+     *
+     * The rule will be evaluated after any {@code before} rule, and in order of definition regarding other
+     * {@code always} or branch rules.
+     *
+     * @param action an action to configure the rule
+     */
     void always(Action<RuleContext> action);
 
 
+    /**
+     * Adds a rule that will always be evaluated. It is equivalent to a branch rule whose condition always
+     * matches.
+     *
+     * The rule will be evaluated after any {@code before} rule, and in order of definition regarding other
+     * {@code always} or branch rules.
+     *
+     * @param closure a closure to configure the rule
+     */
     default void always(@DelegatesTo(RuleContext.class) Closure closure) {
         Action<RuleContext> action = ConfigureUtil.configureUsing(closure);
         always(action);

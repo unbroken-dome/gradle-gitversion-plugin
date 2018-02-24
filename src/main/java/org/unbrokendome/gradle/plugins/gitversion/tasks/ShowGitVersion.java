@@ -13,7 +13,7 @@ import java.util.Collections;
  * A task that prints the version on standard out.
  *
  * <p>This task reads the version from the file that was
- * written earlier by a {@link DetermineGitVersion} task.</p>
+ * written earlier by a {@link DetermineGitVersion} task.
  */
 @SuppressWarnings("WeakerAccess")
 public class ShowGitVersion extends ConventionTask {

@@ -5,6 +5,7 @@ import javax.annotation.Nonnull;
 import org.unbrokendome.gradle.plugins.gitversion.version.SemVersion;
 
 
+@SuppressWarnings("UnusedReturnValue")
 public interface VersioningRulesBuilder {
 
     @Nonnull
