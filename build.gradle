@@ -3,9 +3,9 @@ plugins {
     id 'groovy'
     id 'java-gradle-plugin'
     id 'maven-publish'
-    id 'com.jfrog.bintray' version '1.7'
+    id 'com.jfrog.bintray' version '1.8.0'
     id 'org.unbroken-dome.test-sets' version '1.4.2'
-    id 'com.gradle.plugin-publish' version '0.9.7'
+    id 'com.gradle.plugin-publish' version '0.9.10'
 }
 
 
@@ -19,8 +19,13 @@ testSets {
 }
 
 
+repositories {
+    jcenter()
+}
+
+
 dependencies {
-    implementation 'org.eclipse.jgit:org.eclipse.jgit:4.5.0.201609210915-r'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:4.10.0.201712302008-r'
     implementation 'com.google.guava:guava:20.0'
 
     compileOnly 'com.google.code.findbugs:jsr305:3.0.1'
