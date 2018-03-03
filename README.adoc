@@ -1,0 +1,100 @@
+= Gradle Git Version Plugin
+
+A plugin for the Gradle build system that helps with determining a project's version from its Git repository.
+
+== Rationale
+
+Traditionally, the version of a software project is kept in a text file with the code, e.g. the _gradle.properties_ file
+or the build script itself. This file would have to be updated for each new version, which has a couple of
+disadvantages: Firstly, it requires high maintenance and discipline by the developer, which makes the delivery
+process either error prone, or dependent on such abominations as the
+http://maven.apache.org/maven-release/maven-release-plugin/[Maven Release Plugin].
+Secondly, it makes branching and merging much more difficult, because it either leads to version clashes between
+branches, or requires the first commit on any new branch to be a version change (which must not be merged into another
+branch later).
+
+As most modern software projects are kept under version control in a https://git-scm.com/[Git] repository, which
+already contains rich version-related information, an attractive alternative is to keep version information out of
+the code entirely, and determine the version entirely from the Git repository.
+
+There are already several Gradle plugins that help with this approach, including
+https://plugins.gradle.org/plugin/com.zoltu.git-versioning[com.zoltu.git-versioning],
+https://plugins.gradle.org/plugin/io.freefair.git-version[io.freefair.git-version],
+https://plugins.gradle.org/plugin/com.palantir.git-version[com.palantir.git-version] and
+https://github.com/amkay/gradle-gitflow[com.github.amkay.gitflow].
+However, these plugins are either very simplistic in their approach (like being based only on `git describe`, or
+the presence of tags), or very opinionated about the way you should use Git (e.g. require you to subscribe to the
+http://nvie.com/posts/a-successful-git-branching-model/[Git Flow] process).
+
+This plugin, in contrast, makes very little assumptions about your specific usage of Git; instead it allows you
+define flexible versioning rules in your Gradle script. In fact, the only assumption is that you are producing a
+version that complies with the format of http://semver.org/[Semantic Versioning] format (but not necessarily its
+semantics).
+
+== Quickstart
+
+=== Applying the Plugin
+
+Add the following at the beginning of your Gradle build script:
+
+[source,groovy]
+----
+plugins {
+  id "org.unbroken-dome.gitversion" version "0.9.10"
+}
+----
+
+Applying the plugin installs a `gitVersion` extension in the DSL, as well as some tasks used for versioning.
+
+=== Defining rules
+
+The plugin does not offer much value without at least one versioning rule. Rules can be as simple or complex as you
+like, and you can add any number of rules to the `gitVersion.rules` block:
+
+[source,groovy]
+----
+gitVersion {
+  rules {
+
+    onBranch('master') {
+      version = '1.0.0-master'
+    }
+
+    onBranch(~/release\/(\d+\.\d+)/) {
+      version = matches[1]
+    }
+  }
+}
+----
+
+The above example would distinguish between the branch that is currently checked out. The first rule states that on the
+`master` branch, the resulting version should always be `0.1.0-master`. The second rule uses a regular expression to
+match the name pattern of a release branch, and extracts the version from the branch name. For example, a branch named
+`release/1.2` would lead to the version `1.2.0` (The third part of the version is automatically set to `0` because
+`1.2` would not be a valid semver.)
+
+Read more about <<docs/defining-rules.adoc,Defining Rules>> in the detailed documentation.
+
+=== Using the Version
+
+In Gradle, the project's version is stored in the `version` property of the project. The plugin does not touch it
+automatically, as it offers various ways to determine it.
+
+The easiest way is to call the `determineVersion` method on the `gitVersion` extension after defining your rules:
+
+[source,groovy]
+----
+project.version = gitVersion.determineVersion()
+----
+
+Note that `determineVersion` is a method, not a Gradle task! The reason for this is that the version is generally
+required during the evaluation phase, in order to configure other tasks - so setting it in a task (during the
+execution phase) would be too late.
+
+Read more about <<docs/determine-version,Determining the Version>>, including alternative approaches, in the detailed
+documentation.
+
+== Detailed Documentation
+
+Please refer to the https://github.com/unbroken-dome/gradle-gitversion-plugin/wiki[Wiki] for
+detailed documentation.
