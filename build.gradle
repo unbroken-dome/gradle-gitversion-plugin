@@ -4,8 +4,13 @@ plugins {
     id 'java-gradle-plugin'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.7'
-    id 'org.unbroken-dome.test-sets' version '1.3.2'
+    id 'org.unbroken-dome.test-sets' version '1.4.2'
     id 'com.gradle.plugin-publish' version '0.9.7'
+}
+
+
+repositories {
+    jcenter()
 }
 
 
@@ -15,16 +20,17 @@ testSets {
 
 
 dependencies {
-    compile 'org.eclipse.jgit:org.eclipse.jgit:4.5.0.201609210915-r'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:4.5.0.201609210915-r'
+    implementation 'com.google.guava:guava:20.0'
 
-    compile 'com.google.guava:guava:20.0'
-    compile 'com.google.code.findbugs:jsr305:3.0.1'
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.1'
 
-    testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
+    testImplementation 'junit:junit:4.12'
+    testImplementation('org.spockframework:spock-core:1.0-groovy-2.4') {
         exclude module: 'groovy-all'
     }
 
-    integrationTestRuntime files(pluginUnderTestMetadata.outputDirectory)
+    integrationTestRuntimeOnly files(pluginUnderTestMetadata.outputDirectory)
 }
 
 
