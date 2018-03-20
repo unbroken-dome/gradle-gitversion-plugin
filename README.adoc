@@ -40,7 +40,7 @@ Add the following at the beginning of your Gradle build script:
 [source,groovy]
 ----
 plugins {
-  id "org.unbroken-dome.gitversion" version "0.9.10"
+  id "org.unbroken-dome.gitversion" version "0.10.0"
 }
 ----
 
