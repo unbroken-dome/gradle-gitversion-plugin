@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 public class JGitCommit implements GitCommit {
@@ -54,15 +55,9 @@ public class JGitCommit implements GitCommit {
 
     private <T> T withRevCommit(IOFunction<RevCommit, T> function) {
         return IOUtils.unchecked(() -> {
-            if (objectId instanceof RevCommit) {
-                RevCommit revCommit = (RevCommit) objectId;
-                return function.apply(revCommit);
-
-            } else {
-                try (RevWalk revWalk = new RevWalk(repository.getRepository())) {
-                    RevCommit commit = revWalk.parseCommit(objectId);
-                    return function.apply(commit);
-                }
+            try (RevWalk revWalk = new RevWalk(repository.getRepository())) {
+                RevCommit commit = revWalk.parseCommit(objectId);
+                return function.apply(commit);
             }
         });
     }
@@ -79,10 +74,18 @@ public class JGitCommit implements GitCommit {
     @Nonnull
     @Override
     public List<? extends GitCommit> getParents() {
-        return withRevCommit(revCommit -> Arrays.stream(revCommit.getParents())
-                .map(parentRevCommit -> new JGitCommit(repository, parentRevCommit))
-                .collect(Collectors.toList()));
+        return withRevCommit(revCommit ->
+                streamParents(revCommit)
+                        .map(parentRevCommit -> new JGitCommit(repository, parentRevCommit))
+                        .collect(Collectors.toList()));
     }
+
+
+    @Nonnull
+    private Stream<RevCommit> streamParents(RevCommit revCommit) {
+        return revCommit.getParents() != null ? Arrays.stream(revCommit.getParents()) : Stream.empty();
+    }
+
 
     @Override
     public boolean equals(Object obj) {
