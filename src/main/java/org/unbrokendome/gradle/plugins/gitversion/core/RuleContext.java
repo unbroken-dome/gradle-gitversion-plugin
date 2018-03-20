@@ -100,7 +100,12 @@ public interface RuleContext {
 
 
     default int countCommitsSince(HasObjectId obj) {
-        return new GitOperations(getRepository()).countCommitsSince(obj);
+        return countCommitsSince(obj, false);
+    }
+
+
+    default int countCommitsSince(HasObjectId obj, boolean countMergeCommits) {
+        return new GitOperations(getRepository()).countCommitsSince(obj, countMergeCommits);
     }
 
 
@@ -112,6 +117,6 @@ public interface RuleContext {
 
     @Nullable
     default TaggedCommit findLatestTag(Pattern tagNamePattern) {
-        return findLatestTag(tagNamePattern, false);
+        return findLatestTag(tagNamePattern, true);
     }
 }

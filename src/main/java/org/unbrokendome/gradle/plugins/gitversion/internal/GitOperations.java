@@ -1,8 +1,15 @@
 package org.unbrokendome.gradle.plugins.gitversion.internal;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -109,19 +116,67 @@ public class GitOperations {
     }
 
 
-    public int countCommitsSince(HasObjectId obj) {
-        String id = obj.getId();
-        int count = 0;
-        try (CloseableIterator<GitCommit> commits = repository.firstParentWalk()) {
-            while (commits.hasNext()) {
-                GitCommit commit = commits.next();
-                if (commit.getId().equals(id)) {
-                    return count;
+    public int countCommitsSince(HasObjectId obj, boolean countMergeCommits) {
+        GitCommit head = repository.getHead();
+        if (head != null) {
+            ReachableCommitSet commitSet = new ReachableCommitSet(head, countMergeCommits);
+            do {
+                if (commitSet.contains(obj)) {
+                    return commitSet.size();
                 }
-                ++count;
-            }
+            } while (commitSet.grow());
         }
         return -1;
+    }
+
+
+    private static class ReachableCommitSet {
+
+        private final Set<String> visitedIds = new HashSet<>();
+        private Set<GitCommit> nextStepCommits = Collections.emptySet();
+        private final boolean countMergeCommits;
+        private int size = 0;
+
+        ReachableCommitSet(GitCommit startCommit, boolean countMergeCommits) {
+            this.countMergeCommits = countMergeCommits;
+            addCommits(Collections.singleton(startCommit));
+        }
+
+        private boolean addCommits(Collection<GitCommit> commits) {
+            nextStepCommits = new HashSet<>();
+            Queue<GitCommit> commitsToAdd = new ArrayDeque<>(commits);
+            GitCommit nextCommitToAdd;
+            boolean anyAdded = false;
+            while ((nextCommitToAdd = commitsToAdd.poll()) != null) {
+                if (visitedIds.add(nextCommitToAdd.getId())) {
+                    anyAdded = true;
+                    List<? extends GitCommit> parents = nextCommitToAdd.getParents();
+                    if (!countMergeCommits && parents.size() > 1) {
+                        commitsToAdd.addAll(parents);
+                    } else {
+                        nextStepCommits.addAll(parents);
+                    }
+                }
+            }
+            return anyAdded;
+        }
+
+        boolean grow() {
+            if (addCommits(nextStepCommits)) {
+                size++;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        boolean contains(HasObjectId obj) {
+            return visitedIds.contains(obj.getId());
+        }
+
+        int size() {
+            return size;
+        }
     }
 
 
@@ -162,7 +217,7 @@ public class GitOperations {
             return branch;
         }
 
-        public Matcher getMatcher() {
+        Matcher getMatcher() {
             return matcher;
         }
 

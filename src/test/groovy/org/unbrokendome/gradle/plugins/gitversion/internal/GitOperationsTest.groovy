@@ -2,6 +2,7 @@ package org.unbrokendome.gradle.plugins.gitversion.internal
 
 import org.unbrokendome.gradle.plugins.gitversion.model.MockGitRepository
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class GitOperationsTest extends Specification {
 
@@ -114,7 +115,7 @@ class GitOperationsTest extends Specification {
     /*
      * A --> B --> C     (master, HEAD)
      */
-    def "countCommitsSince"() {
+    def "countCommitsSince simple case"() {
         given:
             def repository = MockGitRepository.builder()
                     .commit('A')
@@ -124,9 +125,37 @@ class GitOperationsTest extends Specification {
             def commitC = repository.head
             def commitA = commitC.parents.first().parents.first()
         when:
-            def count = new GitOperations(repository).countCommitsSince(commitA)
+            def count = new GitOperations(repository).countCommitsSince(commitA, false)
         then:
             count == 2
+    }
+
+    /*
+     * A ---------> D  (master)
+     *  \          ^
+     *   \        /
+     *    B ---> C     (develop)
+     */
+    @Unroll
+    def "countCommitsSince counting merge commits"() {
+        given:
+            def repository = MockGitRepository.builder()
+                .commit('A')
+                .checkoutNew('develop')
+                .commit('B')
+                .commit('C')
+                .checkout('master')
+                .merge('develop', 'D')
+                .build()
+            def commitC = repository.head.parents[1].parents.first()
+        when:
+            def count = new GitOperations(repository).countCommitsSince(commitC, countingMergeCommits)
+        then:
+            count == expectedCount
+        where:
+            countingMergeCommits | expectedCount
+            true                 | 2
+            false                | 1
     }
 
     /*

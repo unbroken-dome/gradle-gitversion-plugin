@@ -43,7 +43,7 @@ class GitVersionPluginIntegrationTest extends Specification {
                 version.set(
                     matches[1].toInteger(),
                     matches[2].toInteger(),
-                    countCommitsSince(branchPoint()))
+                    countCommitsSince(branchPoint(), true))
             }
         }'''
 
