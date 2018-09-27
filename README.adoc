@@ -73,7 +73,7 @@ match the name pattern of a release branch, and extracts the version from the br
 `release/1.2` would lead to the version `1.2.0` (The third part of the version is automatically set to `0` because
 `1.2` would not be a valid semver.)
 
-Read more about <<docs/defining-rules.adoc,Defining Rules>> in the detailed documentation.
+Read more about https://github.com/unbroken-dome/gradle-gitversion-plugin/wiki/Defining-Rules[Defining Rules] in the detailed documentation.
 
 === Using the Version
 
