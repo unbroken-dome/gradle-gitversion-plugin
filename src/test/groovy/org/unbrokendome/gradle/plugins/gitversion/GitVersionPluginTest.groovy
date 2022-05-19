@@ -3,33 +3,33 @@ package org.unbrokendome.gradle.plugins.gitversion
 import org.gradle.api.Project
 import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.testfixtures.ProjectBuilder
-import org.junit.Before
-import org.junit.BeforeClass
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.unbrokendome.gradle.plugins.gitversion.tasks.DetermineGitVersion
 import org.unbrokendome.gradle.plugins.gitversion.tasks.ShowGitVersion
 import spock.lang.Specification
+import spock.lang.TempDir
+
+import java.nio.file.Path
 
 class GitVersionPluginTest extends Specification {
 
-    @Rule TemporaryFolder projectDir
+    @TempDir
+    File projectDir
 
     Project project
 
 
-    @BeforeClass
-    static void disableNativeGradleServices() {
+    def setupSpec() {
         // This will prevent Gradle from copying a native binding DLL to the test directory,
         // which both speeds up the tests and allows the temp folder to be cleaned up properly
         System.setProperty("org.gradle.native", "false")
     }
 
 
-    @Before
-    void initProject() {
+    def setup() {
         project = ProjectBuilder.builder()
-                .withProjectDir(projectDir.root)
+                .withProjectDir(projectDir)
                 .build()
     }
 
