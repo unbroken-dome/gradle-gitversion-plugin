@@ -115,6 +115,22 @@ class GitOperationsTest extends Specification {
     /*
      * A --> B --> C     (master, HEAD)
      */
+    def "branchPoint without a branch point (returns null)"() {
+        given:
+            def repository = MockGitRepository.builder()
+                    .commit('A')
+                    .commit('B')
+                    .commit('C')
+                    .build()
+            when:
+                def branchPoint = new GitOperations(repository).branchPoint("develop")
+            then:
+                branchPoint == null
+    }
+
+    /*
+     * A --> B --> C     (master, HEAD)
+     */
     def "countCommitsSince simple case"() {
         given:
             def repository = MockGitRepository.builder()
@@ -156,6 +172,21 @@ class GitOperationsTest extends Specification {
             countingMergeCommits | expectedCount
             true                 | 2
             false                | 1
+    }
+
+    def "countCommitsSince branchPoint without branch point"() {
+        given:
+            def repository = MockGitRepository.builder()
+                .commit('A')
+                .commit('B')
+                .commit('C')
+                .build()
+        when:
+            def gitOps = new GitOperations(repository)
+            def branchPoint = gitOps.branchPoint("develop")
+            def count = gitOps.countCommitsSince(branchPoint, false)
+        then:
+            count == -1
     }
 
     /*

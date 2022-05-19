@@ -118,7 +118,7 @@ public class GitOperations {
 
     public int countCommitsSince(HasObjectId obj, boolean countMergeCommits) {
         GitCommit head = repository.getHead();
-        if (head != null) {
+        if (obj != null && head != null) {
             ReachableCommitSet commitSet = new ReachableCommitSet(head, countMergeCommits);
             do {
                 if (commitSet.contains(obj)) {
