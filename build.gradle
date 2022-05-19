@@ -3,35 +3,37 @@ plugins {
     id 'groovy'
     id 'java-gradle-plugin'
     id 'maven-publish'
-    id 'com.jfrog.bintray' version '1.8.0'
-    id 'org.unbroken-dome.test-sets' version '1.4.2'
+    id 'org.unbroken-dome.test-sets' version '4.0.0'
     id 'com.gradle.plugin-publish' version '0.9.10'
 }
 
-
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
 
 testSets {
     integrationTest { dirName = 'integration-test' }
 }
 
-
-repositories {
-    jcenter()
-}
-
-
 dependencies {
-    implementation 'org.eclipse.jgit:org.eclipse.jgit:4.10.0.201712302008-r'
-    implementation 'com.google.guava:guava:20.0'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:6.1.0.202203080745-r'
+    implementation 'com.google.guava:guava:31.1-android'
 
-    compileOnly 'com.google.code.findbugs:jsr305:3.0.1'
+    compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
 
-    testImplementation 'junit:junit:4.12'
-    testImplementation('org.spockframework:spock-core:1.0-groovy-2.4') {
+    testImplementation(platform('org.junit:junit-bom:5.8.2'))
+    testImplementation('org.junit.jupiter:junit-jupiter')
+    testImplementation('org.spockframework:spock-core:2.1-groovy-3.0') {
         exclude module: 'groovy-all'
     }
 
